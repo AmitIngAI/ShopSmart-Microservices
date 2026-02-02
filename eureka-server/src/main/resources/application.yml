@@ -1,0 +1,17 @@
+# Server Configuration
+server:
+  port: 8761  # Eureka ka standard port
+
+# Application Name
+spring:
+  application:
+    name: eureka-server
+
+# Eureka Configuration
+eureka:
+  client:
+    register-with-eureka: false  # Khud ko registry mein register mat karo
+    fetch-registry: false        # Doosre services ki registry fetch mat karo
+  server:
+    enable-self-preservation: false  # Development mode ke liye disable
+    eviction-interval-timer-in-ms: 5000  # 5 seconds mein inactive services remove karo
