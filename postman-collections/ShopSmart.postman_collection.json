@@ -1,0 +1,33 @@
+{
+  "info": {
+    "_postman_id": "8576a4c2-32ec-475f-9ab3-9054f32c2a52",
+    "name": "ShopSmart Microservices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52020308",
+    "_collection_link": "https://go.postman.co/collection/52020308-8576a4c2-32ec-475f-9ab3-9054f32c2a52?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Gateway Health Check",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

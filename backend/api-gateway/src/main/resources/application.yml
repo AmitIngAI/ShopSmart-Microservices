@@ -1,0 +1,74 @@
+# Server Configuration
+server:
+  port: 8080  # API Gateway ka port
+
+# Application Name
+spring:
+  application:
+    name: api-gateway
+
+  # Cloud Gateway Configuration
+  cloud:
+    gateway:
+      # Service discovery se automatically routes banao
+      discovery:
+        locator:
+          enabled: true  # Auto-detect services from Eureka
+          lower-case-service-id: true  # URL mein lowercase service names
+
+      # Manual Routes (abhi ke liye placeholder)
+      routes:
+        # User Service Routes
+        - id: user-service
+          uri: lb://user-service  # lb = Load Balanced from Eureka
+          predicates:
+            - Path=/api/users/**  # Ye path user-service ko forward hoga
+
+        # Product Service Routes
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+
+        # Order Service Routes
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+
+        # Payment Service Routes
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+
+      # Global CORS Configuration
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "*"  # Frontend se requests allow karenge
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers: "*"
+            allow-credentials: true
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/  # Eureka Server ka URL
+    register-with-eureka: true   # Khud ko Eureka mein register karo
+    fetch-registry: true          # Doosre services ki info fetch karo
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# Logging (Debugging ke liye)
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
