@@ -1,0 +1,18 @@
+server:
+  port: 8082  # User Service 8081 tha, ye 8082 hoga
+
+spring:
+  application:
+    name: product-service
+
+  # MongoDB Configuration
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/product_db  # Database auto-create ho jayega
+      auto-index-creation: true
+
+# Eureka Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

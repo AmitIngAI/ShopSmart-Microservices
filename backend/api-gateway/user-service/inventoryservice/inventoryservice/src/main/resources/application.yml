@@ -1,0 +1,21 @@
+server:
+  port: 8084  # Inventory Service Port
+
+spring:
+  application:
+    name: inventory-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/inventory_db?createDatabaseIfNotExist=true
+    username: root
+    password: root@2001  # 👈 PASSWORD CHANGE KARNA
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
