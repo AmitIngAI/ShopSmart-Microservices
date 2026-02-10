@@ -13,63 +13,56 @@ env:
   IMAGE_PREFIX: ${{ github.repository_owner }}/shopsmart
 
 jobs:
-  # ========== BUILD & TEST ==========
+  # ========== BUILD & TEST BACKEND ==========
   build-and-test:
-    name: Build & Test
+    name: Build & Test Backend
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: ☕ Set up JDK 17
+      - name: ☕ Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
+          distribution: temurin
           cache: maven
 
       - name: 📦 Build Common Library
         run: |
           cd shared/common-lib
           mvn clean install -DskipTests
-          cd ../..
 
-      - name: 🧪 Build & Test User Service
+      - name: 🧪 User Service
         run: |
           cd user-service
           mvn clean verify
-          cd ..
 
-      - name: 🧪 Build & Test Product Service
+      - name: 🧪 Product Service
         run: |
           cd product-service
           mvn clean verify
-          cd ..
 
-      - name: 🧪 Build & Test Order Service
+      - name: 🧪 Order Service
         run: |
           cd order-service
           mvn clean verify
-          cd ..
 
-      - name: 🧪 Build & Test Payment Service
+      - name: 🧪 Payment Service
         run: |
           cd payment-service
           mvn clean verify
-          cd ..
 
-      - name: 🧪 Build API Gateway
+      - name: 🧪 API Gateway
         run: |
           cd api-gateway
           mvn clean package -DskipTests
-          cd ..
 
-      - name: 🧪 Build Eureka Service
+      - name: 🧪 Eureka Service
         run: |
           cd eureka-service
           mvn clean package -DskipTests
-          cd ..
 
       - name: 📊 Upload Test Results
         uses: actions/upload-artifact@v4
@@ -82,46 +75,43 @@ jobs:
   build-frontend:
     name: Build Frontend
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Set up Node.js
+      - name: 📦 Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Install dependencies
-        run: |
-          cd frontend
-          npm ci
+        working-directory: frontend
+        run: npm ci
 
       - name: 🧪 Run tests
-        run: |
-          cd frontend
-          npm test -- --passWithNoTests
+        working-directory: frontend
+        run: npm test -- --passWithNoTests
 
-      - name: 🔨 Build production
-        run: |
-          cd frontend
-          npm run build
+      - name: 🔨 Build frontend
+        working-directory: frontend
+        run: npm run build
 
-      - name: 📊 Upload build artifacts
+      - name: 📊 Upload frontend build
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/build
 
-  # ========== BUILD DOCKER IMAGES ==========
+  # ========== BUILD & PUSH DOCKER IMAGES ==========
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
     needs: [build-and-test, build-frontend]
     if: github.ref == 'refs/heads/main'
-    
+
     permissions:
       contents: read
       packages: write
@@ -130,103 +120,87 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: ☕ Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: maven
-
-      - name: 📦 Build Common Library
-        run: |
-          cd shared/common-lib
-          mvn clean install -DskipTests
-
-      - name: 🐳 Set up Docker Buildx
+      - name: 🐳 Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🔐 Login to GitHub Container Registry
+      - name: 🔐 Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🏗️ Build & Push Eureka Service
+      - name: 🏗️ Eureka
         uses: docker/build-push-action@v5
         with:
           context: ./eureka-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-eureka:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-eureka:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-eureka:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-eureka:${{ github.sha }}
 
-      - name: 🏗️ Build & Push API Gateway
+      - name: 🏗️ API Gateway
         uses: docker/build-push-action@v5
         with:
           context: ./api-gateway
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-gateway:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-gateway:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-gateway:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-gateway:${{ github.sha }}
 
-      - name: 🏗️ Build & Push User Service
+      - name: 🏗️ User Service
         uses: docker/build-push-action@v5
         with:
           context: ./user-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-user:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-user:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-user:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-user:${{ github.sha }}
 
-      - name: 🏗️ Build & Push Product Service
+      - name: 🏗️ Product Service
         uses: docker/build-push-action@v5
         with:
           context: ./product-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-product:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-product:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-product:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-product:${{ github.sha }}
 
-      - name: 🏗️ Build & Push Order Service
+      - name: 🏗️ Order Service
         uses: docker/build-push-action@v5
         with:
           context: ./order-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-order:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-order:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-order:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-order:${{ github.sha }}
 
-      - name: 🏗️ Build & Push Payment Service
+      - name: 🏗️ Payment Service
         uses: docker/build-push-action@v5
         with:
           context: ./payment-service
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-payment:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-payment:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-payment:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-payment:${{ github.sha }}
 
-      - name: 🏗️ Build & Push Frontend
+      - name: 🏗️ Frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:latest,${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:${{ github.sha }}
 
-  # ========== DEPLOY TO SERVER ==========
+  # ========== DEPLOY ==========
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build-docker
     if: github.ref == 'refs/heads/main'
-    environment: production
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
 
+    steps:
       - name: 🚀 Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -239,16 +213,3 @@ jobs:
             docker-compose pull
             docker-compose up -d
             docker system prune -f
-
-      - name: ✅ Health Check
-        run: |
-          sleep 30
-          curl -f http://${{ secrets.SERVER_HOST }}:8080/actuator/health || exit 1
-
-      - name: 📢 Notify Deployment Success
-        if: success()
-        run: echo "✅ Deployment successful!"
-
-      - name: 🚨 Notify Deployment Failure
-        if: failure()
-        run: echo "❌ Deployment failed!"
