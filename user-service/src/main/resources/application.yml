@@ -24,9 +24,8 @@ eureka:
   instance:
     prefer-ip-address: true
 
-jwt:
-  secret: shopsmart-secret-key-change-in-prod-12345
-  expiration: 86400
+
+  
 
 management:
   endpoints:
