@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: userdb
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    ports:
+      - "3306:3306"
+    networks:
+      - shopsmart-network
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mongodb:
     image: mongo:latest
     container_name: shopsmart-mongodb
@@ -19,26 +38,40 @@ services:
     networks:
       - shopsmart-network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: shopsmart-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: secureRabbitPass123
+    ports:
+      - "15672:15672"
+    networks:
+      - shopsmart-network
+
   user-service:
     build: ./user-service
     container_name: user-service
     ports:
       - "8081:8081"
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:secureMongoPass123@mongodb:27017/users?authSource=admin
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/userdb?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
-      - mongodb
+      mysql-db:
+        condition: service_healthy
     networks:
       - shopsmart-network
 
-  inventory-service:
-    build: ./inventory-service
-    container_name: inventory-service
+  product-service:
+    build: ./product-service
+    container_name: product-service
     ports:
       - "8082:8082"
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:secureMongoPass123@mongodb:27017/inventory?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:secureMongoPass123@shopsmart-mongodb:27017/products?authSource=admin
     depends_on:
       - mongodb
     networks:
@@ -50,9 +83,10 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:secureMongoPass123@mongodb:27017/orders?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:secureMongoPass123@shopsmart-mongodb:27017/orders?authSource=admin
     depends_on:
       - mongodb
+      - rabbitmq
     networks:
       - shopsmart-network
 
@@ -62,3 +96,4 @@ networks:
 
 volumes:
   mongodb_data:
+  mysql_data:
