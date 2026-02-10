@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopsmart-config
+  namespace: shopsmart
+data:
+  EUREKA_SERVER_URL: "http://eureka-service:8761/eureka/"
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  ZIPKIN_URL: "http://zipkin:9411"
+  MYSQL_HOST: "mysql-db"
+  MYSQL_PORT: "3306"
+  MONGODB_HOST: "mongodb"
+  MONGODB_PORT: "27017"

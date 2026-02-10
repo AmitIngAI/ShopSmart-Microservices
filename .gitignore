@@ -1,0 +1,30 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Environment files
+.env
+*.env
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# OS files
+Thumbs.db
+
+# Spring Boot
+application-local.properties
+application-dev.properties
