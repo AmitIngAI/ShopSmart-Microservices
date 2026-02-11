@@ -28,3 +28,26 @@ Thumbs.db
 # Spring Boot
 application-local.properties
 application-dev.properties
+
+# Sensitive configuration files
+docker-compose.yml
+**/application.yml
+**/application.properties
+.env
+.env.*
+
+# Build artifacts
+**/target/
+**/build/
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Docker Desktop files (system-specific)
+.docker/
+*.bat
